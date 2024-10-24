@@ -8,6 +8,7 @@ import Link from "next/link";
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const { register, handleSubmit, reset } = useForm();
@@ -22,6 +23,7 @@ const Home = () => {
       const res = await axios.get(endpoint);
       if (page === 1) setMovies(res.data.results);
       else setMovies((prevMovies) => [...prevMovies, ...res.data.results]);
+      setTotalPages(res.data.total_pages);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -40,7 +42,11 @@ const Home = () => {
   };
 
   const handleLoadMore = () => {
-    setPage((prevPage) => prevPage + 1);
+    if (page < totalPages) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchMovies(nextPage);
+    }
   };
 
   return (
@@ -64,10 +70,10 @@ const Home = () => {
       </form>
       <h1 className="text-4xl font-bold mb-4">Popular Movies</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {movies.map((movie) => (
+        {movies.map((movie, index) => (
           <Link
-            href={`/movieDetail/${movie.id}`}
-            key={movie.id}
+            href={`/movieDetails/${movie.id}`}
+            key={index}
             className="border-2 border-solid rounded-md flex flex-col space-y-10 pb-5 items-center"
           >
             <Image
@@ -84,13 +90,15 @@ const Home = () => {
       </div>
       {loading && <p>Loading...</p>}
       <div className="flex justify-center">
-        <button
-          onClick={handleLoadMore}
-          className="my-5 p-2 px-10 text-lg bg-[#04734C] text-white rounded-md"
-          disabled={loading}
-        >
-          {loading ? "Loading..." : "Load More"}
-        </button>
+        {page < totalPages && (
+          <button
+            onClick={handleLoadMore}
+            className="my-5 p-2 px-10 text-lg bg-[#04734C] text-white rounded-md"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Load More"}
+          </button>
+        )}
       </div>
     </div>
   );
