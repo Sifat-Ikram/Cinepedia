@@ -1,6 +1,6 @@
-import useWatchlistStore from "@/store/useWatchlistStore";
 import axios from "axios";
 import Image from "next/image";
+import MovieDetailsClient from "./MovieDetailsClient";
 
 export async function generateStaticParams() {
   const res = await axios.get(
@@ -8,9 +8,8 @@ export async function generateStaticParams() {
   );
   const movies = res.data.results;
 
-  // Generate static params based on popular movies
   return movies.map((movie) => ({
-    id: movie.id.toString(), // Ensure id is a string
+    id: movie.id.toString(),
   }));
 }
 
@@ -23,11 +22,6 @@ export async function getMovieData(id) {
 
 const MovieDetails = async ({ params }) => {
   const { id } = await params;
-  const { addToWatchlist, removeFromWatchlist, watchlist } =
-    useWatchlistStore();
-
-  const isMovieInWatchlist = watchlist.some((movie) => movie.id === Number(id));
-
   const movie = await getMovieData(id);
 
   return (
@@ -37,10 +31,10 @@ const MovieDetails = async ({ params }) => {
           <Image
             src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
             alt={movie.title}
-            width={300}
-            height={550}
+            width={500}
+            height={600}
             priority
-            className="w-[500px] h-[550px] rounded-lg shadow-lg"
+            className="w-[500px] h-[600px] rounded-lg shadow-lg"
           />
         </div>
         <div>
@@ -59,20 +53,8 @@ const MovieDetails = async ({ params }) => {
             {movie.genres.map((genre) => genre.name).join(", ")}
           </p>
         </div>
-        <div className="flex justify-end">
-          <button
-            onClick={() => {
-              if (isMovieInWatchlist) {
-                removeFromWatchlist(Number(id));
-              } else {
-                addToWatchlist({ id: Number(id), title: "Movie Title" }); // Add actual movie details
-              }
-            }}
-            className="p-2 sm:py-2 md:py-3 sm:px-5 md:px-10 lg:px-20 text-sm sm:text-base md:text-lg lg:text-3xl bg-[#04734C] hover:bg-[#124936] text-white rounded-md"
-          >
-            {isMovieInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
-          </button>
-        </div>
+        {/* Pass movie and ID to the client-side component */}
+        <MovieDetailsClient movie={movie} movieId={id} />
       </div>
     </div>
   );
